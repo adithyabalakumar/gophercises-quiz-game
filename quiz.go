@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/csv"
 	"flag"
 	"fmt"
 	"os"
@@ -28,15 +29,18 @@ func readCSV(fileNamePtr *string) ([]Problem, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Process the CSV data here (e.g., split by lines, then by commas)
-	lines := strings.Split(string(data), "\n")
+	// Process the CSV data here (using encoding/csv package)
+	r := csv.NewReader(strings.NewReader(string(data)))
+	records, err := r.ReadAll()
+	if err != nil {
+		return nil, err
+	}
 	questions := make([]Problem, 0)
-	for _, line := range lines {
-		parts := strings.Split(line, ",")
-		if len(parts) == 2 {
+	for _, record := range records {
+		if len(record) == 2 {
 			questions = append(questions, Problem{
-				Question: strings.TrimSpace(parts[0]),
-				Answer:   strings.TrimSpace(parts[1]),
+				Question: strings.TrimSpace(record[0]),
+				Answer:   strings.TrimSpace(record[1]),
 			})
 		}
 	}
