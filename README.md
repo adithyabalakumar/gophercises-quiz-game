@@ -14,9 +14,14 @@ Usage:
 $ ./quiz -h
 ```
 
-Pass custom CSV file:
+Pass custom CSV file (default: problems.csv):
 ```
 $ ./quiz -file /path/to/file
+```
+
+Set a timeout for the quiz in seconds (default: 30s):
+```
+$ ./quiz -limit 20
 ```
 
 Start quiz:

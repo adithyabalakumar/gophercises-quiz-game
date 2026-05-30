@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 )
 
 type Problem struct {
@@ -47,16 +48,26 @@ func readCSV(fileNamePtr *string) ([]Problem, error) {
 	return questions, nil
 }
 
-func startQuiz(questions []Problem) {
+func startQuiz(questions []Problem, timer *time.Timer) {
 	// Loop through the questions and present them to the user
 	// Collect the user's answers and keep track of the score
 	score := 0
 	for i, q := range questions {
 		fmt.Printf("Question #%d: %s\nYour answer: ", i+1, q.Question)
-		var userAnswer string
-		fmt.Scanln(&userAnswer)
-		if strings.TrimSpace(userAnswer) == q.Answer {
-			score++
+		answerCh := make(chan string)
+		go func() {
+			var userAnswer string
+			fmt.Scanln(&userAnswer)
+			answerCh <- userAnswer
+		}()
+		select {
+		case <-timer.C:
+			fmt.Printf("\nTime's up! Your score is: %d/%d\n", score, len(questions))
+			return
+		case userAnswer := <-answerCh:
+			if strings.TrimSpace(userAnswer) == q.Answer {
+				score++
+			}
 		}
 	}
 	fmt.Printf("Quiz completed! Your score is: %d/%d\n", score, len(questions))
@@ -66,6 +77,7 @@ func main() {
 	// Get the command-line arguments
 	helpPtr := flag.Bool("h", false, "Show this help message")
 	fileNamePtr := flag.String("file", "problems.csv", "CSV file containing quiz questions and answers")
+	timeLimit := flag.Int("limit", 20, "the time limit for the quiz in seconds")
 	flag.Parse()
 
 	if *helpPtr {
@@ -80,5 +92,6 @@ func main() {
 		return
 	}
 
-	startQuiz(questions)
+	timer := time.NewTimer(time.Duration(*timeLimit) * time.Second)
+	startQuiz(questions, timer)
 }
